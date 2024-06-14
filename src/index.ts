@@ -1,48 +1,64 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { ConfigClient } from './config';
-import { TokenGenerator } from './image';
+import { Cli } from './Cli';
+import { TokenGenerator } from './TokenGenerator';
+import { generateFileName } from './helpers/generateFileName';
+import { getImageFileNames } from './helpers/getImageFiles';
 
-const main = async () => {
-  ConfigClient.init();
+const TOKEN_TEMPLATE_FILE_PATH = './assets/token-template.png';
+const TOKEN_TEMPLATE_SIZE = 250;
+const INNER_TOKEN_TEMPLATE_SIZE = 240; // account for white space for surrounding template shadow
 
-  const config = ConfigClient.getConfig();
-  
-  const tokenTemplateSize = 250;
-  const innerTokenTemplateSize = 240; // account for white space for surrounding template shadow
+const main = async ({
+  destroyOriginalImages,
+  inDir,
+  outDir
+}: {
+  destroyOriginalImages: boolean,
+  inDir: string,
+  outDir: string
+}) => {
+  // Account for build dir with .. , remove when bundle is generated at root of project
+  const inDirPath = path.join(__dirname, '..', inDir);
+  const outDirPath = path.join(__dirname, '..', outDir);
+  const tokenTemplatePath = path.join(__dirname, '..', TOKEN_TEMPLATE_FILE_PATH);
 
-  const files = fs.readdirSync(config.tokenInDir).filter((item) => {
-    const extension = path.extname(item);
+  const tokenTemplateBuffer = fs.readFileSync(tokenTemplatePath);
 
-    return (
-      extension === '.png' || 
-      extension === '.jpg' ||
-      extension === '.webp'
-    );
-  });
+  const inDirFileNames = getImageFileNames(inDirPath);
 
-  const tokenTemplateFilePath = path.join(__dirname, '..', 'assets', 'token-template.png');
-  const tokenTemplateBuffer = fs.readFileSync(tokenTemplateFilePath);
-
-  files.forEach(async (file) => {
-    const imageToTokenizeFilePath = path.join(config.tokenInDir, file);
-    const imageToTokenizeBuffer = fs.readFileSync(imageToTokenizeFilePath);
+  inDirFileNames.forEach(async (file) => {
+    const originalFilePath = path.join(inDirPath, file);
+    const imageToTokenizeBuffer = fs.readFileSync(originalFilePath);
 
     const tokenBuffer = await TokenGenerator.getToken(
       imageToTokenizeBuffer,
       tokenTemplateBuffer,
-      tokenTemplateSize,
-      innerTokenTemplateSize / 2
+      TOKEN_TEMPLATE_SIZE,
+      INNER_TOKEN_TEMPLATE_SIZE / 2
     );
 
     const fileName = path.parse(file).name;
-    const newFileName = `${fileName}-token${TokenGenerator.getExportFileExtension()}`;
-
-    const exportPath = path.join(config.tokenOutDir, newFileName);
+    const newFileName = generateFileName(fileName, TokenGenerator.getExportFileExtension());
+    const exportPath = path.join(outDirPath, newFileName);
 
     fs.writeFileSync(exportPath, tokenBuffer);
+
+    if (destroyOriginalImages) {
+      fs.rmSync(originalFilePath);
+    }
   });
 };
 
-main();
+const options = Cli.run();
+
+const inDir = options.in ?? '';
+const outDir = options.out ?? '';
+const destroyOriginalImages = options.d ?? false;
+
+main({
+  destroyOriginalImages,
+  inDir,
+  outDir
+});

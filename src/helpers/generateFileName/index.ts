@@ -1,0 +1,1 @@
+export { generateFileName } from './generateFileName';

@@ -1,0 +1,1 @@
+export { isAllowedImageExtension } from './isAllowedImageExtension';
