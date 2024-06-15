@@ -13,7 +13,7 @@ export class Cli {
     program
       .name('token-builder')
       .description('CLI to generate TTRPG tokens from images')
-      .version('0.0.0');
+      .version('1.0.0');
 
     program
       .description('build tokens from images, either from a single image or a directory of images')
