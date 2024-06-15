@@ -11,7 +11,8 @@ Project to replace my Photoshop token template, taking in an image and generatin
 
 - Install: `npm i`
 - Compile: `npm run build`
-- Start: `npm start` will take arguments from dotenv and generate tokens
+- Install globally: `npm i -g .`
+- Start: `token-builder <args>`
 
 ## CLI
 
