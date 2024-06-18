@@ -21,9 +21,8 @@ const main = async ({
   inDir: string,
   outDir: string
 }) => {
-  // Account for build dir with .. , remove when bundle is generated at root of project
-  const inDirPath = path.join(__dirname, '..', inDir);
-  const outDirPath = path.join(__dirname, '..', outDir);
+  const inDirPath = path.resolve(inDir);
+  const outDirPath = path.resolve(outDir);
   const tokenTemplatePath = path.join(__dirname, '..', TOKEN_TEMPLATE_FILE_PATH);
 
   const tokenTemplateBuffer = fs.readFileSync(tokenTemplatePath);
